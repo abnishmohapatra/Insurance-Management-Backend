@@ -1,0 +1,58 @@
+package com.example.service;
+
+import java.util.List;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import com.example.model.Tickets;
+import com.example.repo.TicketsRepo;
+
+@Service
+public class TicketsService {
+    
+    @Autowired
+    private TicketsRepo tr;
+
+    //To get All tickets
+    public List<Tickets> getAllTickets() {
+        return tr.findAll();
+    }
+    
+    //To get open tickets
+    public List<Tickets> getOpenTickets() {
+        return tr.findByResponseTxtIsNull();
+    }
+    
+  //To get close tickets
+    public List<Tickets> getCloseTickets() {
+        return tr.findByResponseTxtIsNotNull();
+    }
+
+    //To get one ticket by ticket id
+    public Optional<Tickets> getTicketById(Long id) {
+        return tr.findById(id);
+    }
+
+    //To get count of all tickets raised
+    public long getTotalTickets() {
+        return tr.count();
+    }
+    
+    //To create tickets
+    public void add(@RequestBody Tickets t)
+    {
+    	tr.save(t);
+    }
+    
+    
+    //To update ticket response
+    public void updateTicket(Long id, Tickets ticketDetails) {
+        Optional<Tickets> ticketOptional = tr.findById(id);
+            Tickets ticket = ticketOptional.get();
+            ticket.setResponseTxt(ticketDetails.getResponseTxt());
+            tr.save(ticket);
+    }
+}

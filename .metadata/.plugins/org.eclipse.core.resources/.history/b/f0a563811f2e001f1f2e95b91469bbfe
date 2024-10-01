@@ -1,0 +1,70 @@
+package com.example.controller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import com.example.model.Tickets;
+import com.example.service.TicketsService;
+
+@RestController
+@RequestMapping("/api/tickets")
+@CrossOrigin(origins = "*")
+public class TicketsController {
+
+    @Autowired
+    private TicketsService ticketService;
+
+
+    @GetMapping("/all")
+    public List<Tickets> getAllTickets() {
+        return ticketService.getAllTickets();
+    }
+    
+    @GetMapping("/open")
+    public List<Tickets> getOpenTickets() {
+        return ticketService.getOpenTickets();
+    }
+    
+    @GetMapping("/closed")
+    public List<Tickets> getCloseTickets() {
+        return ticketService.getCloseTickets();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Tickets> getTicketById(@PathVariable Long id) {
+        Optional<Tickets> ticket = ticketService.getTicketById(id);
+        return ticket.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+    
+    @PostMapping("/create")
+    public void add(@RequestBody Tickets t)
+    {
+    	ticketService.add(t);
+    }
+    
+    @PutMapping("/update/{id}")
+    public void updateTicket(@PathVariable Long id, @RequestBody Tickets ticketDetails) {
+        Optional<Tickets> ticketOptional = ticketService.getTicketById(id);
+            Tickets ticket = ticketOptional.get();
+            ticket.setResponseTxt(ticketDetails.getResponseTxt());
+            ticketService.updateTicket(id, ticketDetails);
+            
+            
+    }
+    
+//    
+//    @GetMapping("/tickets/closed/count")
+//    public ResponseEntity<Map<String, Long>> getClosedTicketsCount() {
+//        long count = ticketService.countClosedTickets();
+//        Map<String, Long> response = new HashMap<>();
+//        response.put("count", count);
+//        return ResponseEntity.ok(response);
+    }
+
+    
+
+

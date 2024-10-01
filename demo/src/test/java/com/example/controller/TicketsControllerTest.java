@@ -1,0 +1,166 @@
+package com.example.controller;
+
+import com.example.model.EmailRequest;
+import com.example.model.Tickets;
+import com.example.service.TicketsService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class TicketsControllerTest {
+
+    @Mock
+    private TicketsService ticketsService;
+
+    @Mock
+    private JavaMailSender mailSender;
+
+    @InjectMocks
+    private TicketsController ticketsController;
+
+    private Tickets ticket1;
+    private Tickets ticket2;
+
+    @BeforeEach
+    void setUp() {
+        ticket1 = new Tickets();
+        ticket1.setId(1L);
+        ticket1.setTitle("Ticket 1");
+        ticket1.setDescription("Description 1");
+
+        ticket2 = new Tickets();
+        ticket2.setId(2L);
+        ticket2.setTitle("Ticket 2");
+        ticket2.setDescription("Description 2");
+    }
+
+    @Test
+    void testGetAllTickets() {
+        when(ticketsService.getAllTickets()).thenReturn(Arrays.asList(ticket1, ticket2));
+
+        List<Tickets> result = ticketsController.getAllTickets();
+
+        assertEquals(2, result.size());
+        assertEquals(ticket1, result.get(0));
+        assertEquals(ticket2, result.get(1));
+        verify(ticketsService, times(1)).getAllTickets();
+    }
+
+    @Test
+    void testGetOpenTickets() {
+        when(ticketsService.getOpenTickets()).thenReturn(Arrays.asList(ticket1));
+
+        List<Tickets> result = ticketsController.getOpenTickets();
+
+        assertEquals(1, result.size());
+        assertEquals(ticket1, result.get(0));
+        verify(ticketsService, times(1)).getOpenTickets();
+    }
+
+    @Test
+    void testGetCloseTickets() {
+        when(ticketsService.getCloseTickets()).thenReturn(Arrays.asList(ticket2));
+
+        List<Tickets> result = ticketsController.getCloseTickets();
+
+        assertEquals(1, result.size());
+        assertEquals(ticket2, result.get(0));
+        verify(ticketsService, times(1)).getCloseTickets();
+    }
+
+    @Test
+    void testGetTicketById_Found() {
+        when(ticketsService.getTicketById(anyLong())).thenReturn(Optional.of(ticket1));
+
+        ResponseEntity<Tickets> result = ticketsController.getTicketById(1L);
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals(ticket1, result.getBody());
+        verify(ticketsService, times(1)).getTicketById(1L);
+    }
+
+    @Test
+    void testGetTicketById_NotFound() {
+        when(ticketsService.getTicketById(anyLong())).thenReturn(Optional.empty());
+
+        ResponseEntity<Tickets> result = ticketsController.getTicketById(1L);
+
+        assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
+        verify(ticketsService, times(1)).getTicketById(1L);
+    }
+
+    @Test
+    void testAddTicket() {
+        doNothing().when(ticketsService).add(any(Tickets.class));
+
+        ticketsController.add(ticket1);
+
+        verify(ticketsService, times(1)).add(ticket1);
+    }
+
+    @Test
+    void testUpdateTicket_Found() {
+        when(ticketsService.getTicketById(anyLong())).thenReturn(Optional.of(ticket1));
+        doNothing().when(ticketsService).updateTicket(anyLong(), any(Tickets.class));
+
+        Tickets updatedTicket = new Tickets();
+        updatedTicket.setResponseTxt("Response text");
+
+        ResponseEntity<Tickets> result = ticketsController.updateTicket(1L, updatedTicket);
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals("Response text", result.getBody().getResponseTxt());
+        verify(ticketsService, times(1)).getTicketById(1L);
+        verify(ticketsService, times(1)).updateTicket(1L, updatedTicket);
+    }
+
+    @Test
+    void testUpdateTicket_NotFound() {
+        when(ticketsService.getTicketById(anyLong())).thenReturn(Optional.empty());
+
+        Tickets updatedTicket = new Tickets();
+        updatedTicket.setResponseTxt("Response text");
+
+        ResponseEntity<Tickets> result = ticketsController.updateTicket(1L, updatedTicket);
+
+        assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
+        verify(ticketsService, times(1)).getTicketById(1L);
+    }
+
+    @Test
+    void testSendEmail() {
+        EmailRequest emailRequest = new EmailRequest();
+        emailRequest.setTo("test@example.com");
+        emailRequest.setSubject("Subject");
+        emailRequest.setBody("Body");
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(emailRequest.getTo());
+        message.setSubject(emailRequest.getSubject());
+        message.setText(emailRequest.getBody());
+
+        doNothing().when(mailSender).send(any(SimpleMailMessage.class));
+
+        String result = ticketsController.sendEmail(emailRequest);
+
+        assertEquals("Email sent successfully", result);
+        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+    }
+}

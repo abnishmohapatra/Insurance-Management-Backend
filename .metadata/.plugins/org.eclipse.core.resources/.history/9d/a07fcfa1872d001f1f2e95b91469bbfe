@@ -1,0 +1,76 @@
+package com.example.service;
+
+import java.util.List;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import com.example.model.Tickets;
+import com.example.repo.TicketsRepo;
+
+@Service
+public class TicketsService {
+    
+    @Autowired
+    private TicketsRepo tr;
+
+    public List<Tickets> getAllTickets() {
+        return tr.findAll();
+    }
+    
+    public List<Tickets> getOpenTickets() {
+        return tr.findByResponseTxtIsNull();
+    }
+
+    public Optional<Tickets> getTicketById(Long id) {
+        return tr.findById(id);
+    }
+
+//    public Tickets saveOrUpdateTicket(Tickets ticket) {
+//        // Ensure user is saved before saving ticket
+//        User user = ticket.getUser();
+//        if (user != null && (user.getUserId() == null || !userRepository.existsById(user.getUserId()))) {
+//            user = userRepository.save(user);
+//            ticket.setUser(user);
+//        }
+//        return tr.save(ticket);
+//    }
+
+//    public void deleteTicket(Long id) {
+//        tr.deleteById(id);
+//    }
+
+    public long getTotalTickets() {
+        return tr.count();
+    }
+
+    public List<Tickets> getPendingTickets() {
+        return tr.findByResponseTxtIsNull();
+    }
+
+    public List<Tickets> getResolvedTickets() {
+        return tr.findByResponseTxtIsNotNull();
+    }
+    
+    public void add(@RequestBody Tickets t)
+    {
+    	tr.save(t);
+    }
+    
+    public void updateTicket(Long id, Tickets ticketDetails) {
+        Optional<Tickets> ticketOptional = tr.findById(id);
+            Tickets ticket = ticketOptional.get();
+            ticket.setResponseTxt(ticketDetails.getResponseTxt());
+            tr.save(ticket);
+    }
+
+//    public List<TicketSummaryDto> findUserIdTicketIdAndTitle() {
+//        List<Object[]> results = tr.findUserIdTicketIdAndTitle();
+//        return results.stream()
+//                .map(row -> new TicketSummaryDto((Long) row[0], (Long) row[1], (String) row[2]))
+//                .collect(Collectors.toList());
+//    }
+
+}

@@ -1,0 +1,121 @@
+package com.example.controller;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import com.example.model.Tickets;
+import com.example.model.User;
+import com.example.service.TicketsService;
+
+@RestController
+@RequestMapping("/api/tickets")
+@CrossOrigin(origins = "*")
+public class TicketsController {
+
+    @Autowired
+    private TicketsService ticketService;
+
+//    @GetMapping("/dashboard")
+//    public ResponseEntity<?> getDashboard() {
+//        long totalTickets = ticketService.getTotalTickets();
+//        List<Tickets> pendingTickets = ticketService.getPendingTickets();
+//        List<Tickets> resolvedTickets = ticketService.getResolvedTickets();
+//
+//        return ResponseEntity.ok(new DashboardResponse(totalTickets, pendingTickets.size(), resolvedTickets.size()));
+//    }
+
+    @GetMapping("/get")
+    public List<Tickets> getAllTickets() {
+        return ticketService.getAllTickets();
+    }
+    
+    @GetMapping("/open")
+    public List<Tickets> getOpenTickets() {
+        return ticketService.getOpenTickets();
+    }
+    
+    @GetMapping("/closed")
+    public List<Tickets> getCloseTickets() {
+        return ticketService.getCloseTickets();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Tickets> getTicketById(@PathVariable Long id) {
+        Optional<Tickets> ticket = ticketService.getTicketById(id);
+        return ticket.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+    
+    @PostMapping("/create")
+    public void add(@RequestBody Tickets t)
+    {
+    	ticketService.add(t);
+    }
+    
+    @PutMapping("/update/{id}")
+    public void updateTicket(@PathVariable Long id, @RequestBody Tickets ticketDetails) {
+            ticketService.updateTicket(id, ticketDetails);
+    }
+
+//    @PostMapping("/create")
+//    public Tickets createTicket(@RequestBody Tickets ticket) {
+//        return ticketService.saveOrUpdateTicket(ticket);
+//    }
+
+//    @PutMapping("/{id}")
+//    public ResponseEntity<Tickets> updateTicket(@PathVariable Long id, @RequestBody Tickets ticketDetails) {
+//        Optional<Tickets> ticketOptional = ticketService.getTicketById(id);
+//
+//        if (ticketOptional.isPresent()) {
+//            Tickets ticket = ticketOptional.get();
+//            ticket.setTitle(ticketDetails.getTitle());
+//            ticket.setDescription(ticketDetails.getDescription());
+//            ticket.setResponseTxt(ticketDetails.getResponseTxt());
+//            ticket.setResponseAt(ticketDetails.getResponseAt());
+//            ticket.setUser(ticketDetails.getUser());
+//            final Tickets updatedTicket = ticketService.saveOrUpdateTicket(ticket);
+//            return ResponseEntity.ok(updatedTicket);
+//        } else {
+//            return ResponseEntity.notFound().build();
+//        }
+//    }
+
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<Void> deleteTicket(@PathVariable Long id) {
+//        ticketService.deleteTicket(id);
+//        return ResponseEntity.noContent().build();
+//    }
+
+//    @GetMapping("/user/{userId}")
+//    public ResponseEntity<List<Tickets>> getTicketsByUserId(@PathVariable Long userId) {
+//        Optional<User> userOptional = userService.getUserById(userId);
+//
+//        if (userOptional.isPresent()) {
+//            List<Tickets> tickets = userOptional.get().getTickets();
+//            return ResponseEntity.ok(tickets);
+//        } else {
+//            return ResponseEntity.notFound().build();
+//        }
+//    }
+//    @GetMapping("/tickets-summary")
+//    public List<TicketSummaryDto> getTicketsSummary() {
+//        return ticketService.findUserIdTicketIdAndTitle();
+//    }
+    
+//    @PostMapping("/{id}/response")
+//    public ResponseEntity<Tickets> respondToTicket(@PathVariable Long id, @RequestBody String responseTxt) {
+//        Optional<Tickets> ticketOptional = ticketService.getTicketById(id);
+//
+//        if (ticketOptional.isPresent()) {
+//            Tickets ticket = ticketOptional.get();
+//            ticket.setResponseTxt(responseTxt);
+//            ticket.setResponseAt(LocalDateTime.now());
+//            final Tickets updatedTicket = ticketService.saveOrUpdateTicket(ticket);
+//            return ResponseEntity.ok(updatedTicket);
+//        } else {
+//            return ResponseEntity.notFound().build();
+//        }
+//    }
+}

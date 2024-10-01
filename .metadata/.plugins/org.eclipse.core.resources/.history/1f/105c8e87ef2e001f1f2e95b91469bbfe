@@ -1,0 +1,85 @@
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+ 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
+ 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+ 
+import java.util.List;
+ 
+@ExtendWith(MockitoExtension.class)
+public class TicketsTest {
+ 
+    @InjectMocks
+    private TicketsService ticketsService;
+ 
+    @Mock
+    private TicketsRepository ticketsRepository;
+ 
+    @Mock
+    private EntityManager entityManager;
+ 
+    @BeforeEach
+    public void init() {
+        ticketsService = new TicketsService(ticketsRepository, entityManager);
+    }
+ 
+    @Test
+    public void testSaveTicket() {
+        Tickets ticket = new Tickets();
+        ticket.setId(1L);
+        ticket.setTitle("Test Ticket");
+        ticket.setDescription("Test Description");
+        ticket.setResponseTxt("Test Response");
+        ticket.setResponseAt(LocalDateTime.now());
+ 
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+        ticket.setUser(user);
+ 
+        // Mocking repository save method
+        Mockito.when(ticketsRepository.save(Mockito.any(Tickets.class))).thenReturn(ticket);
+ 
+        Tickets savedTicket = ticketsService.saveTicket(ticket);
+ 
+        assertEquals(ticket.getId(), savedTicket.getId());
+        assertEquals(ticket.getTitle(), savedTicket.getTitle());
+        assertEquals(ticket.getDescription(), savedTicket.getDescription());
+        assertEquals(ticket.getResponseTxt(), savedTicket.getResponseTxt());
+        assertEquals(ticket.getResponseAt(), savedTicket.getResponseAt());
+        assertEquals(ticket.getUser(), savedTicket.getUser());
+    }
+ 
+    @Test
+    public void testFindAllTickets() {
+        // Mocking a list of tickets
+        Tickets ticket1 = new Tickets();
+        ticket1.setId(1L);
+        ticket1.setTitle("Ticket 1");
+ 
+        Tickets ticket2 = new Tickets();
+        ticket2.setId(2L);
+        ticket2.setTitle("Ticket 2");
+ 
+        List<Tickets> ticketsList = List.of(ticket1, ticket2);
+ 
+        // Mocking repository findAll method
+        TypedQuery<Tickets> query = mock(TypedQuery.class);
+        Mockito.when(entityManager.createQuery("SELECT t FROM Tickets t", Tickets.class)).thenReturn(query);
+        Mockito.when(query.getResultList()).thenReturn(ticketsList);
+ 
+        List<Tickets> foundTickets = ticketsService.findAllTickets();
+ 
+        assertEquals(2, foundTickets.size());
+        assertEquals("Ticket 1", foundTickets.get(0).getTitle());
+        assertEquals("Ticket 2", foundTickets.get(1).getTitle());
+    }
+}

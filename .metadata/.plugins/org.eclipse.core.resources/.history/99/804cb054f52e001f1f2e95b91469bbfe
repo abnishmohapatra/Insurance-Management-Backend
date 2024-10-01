@@ -1,0 +1,89 @@
+package com.example.model;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.time.LocalDate;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
+import jakarta.validation.ConstraintViolationException;
+
+public class UserTest {
+
+    private EntityManagerFactory emf;
+    private EntityManager em;
+
+    @BeforeEach
+    public void setup() {
+        emf = Persistence.createEntityManagerFactory("your-persistence-unit-name"); // replace with your persistence unit name
+        em = emf.createEntityManager();
+        em.getTransaction().begin();
+    }
+
+    @AfterEach
+    public void teardown() {
+        em.getTransaction().rollback();
+        em.close();
+        emf.close();
+    }
+
+    @Test
+    public void testUserEntityFields() {
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setDob(LocalDate.of(1990, 5, 15));
+        user.setPhoneNo("1234567890");
+        user.setEmailId("john.doe@example.com");
+        user.setAddress("123 Main St, City, Country");
+        user.setPassword("password");
+        user.setRole("user");
+        user.setCreatedAt(LocalDate.now());
+
+        em.persist(user);
+
+        assertNotNull(user.getUserId());
+        assertEquals("John", user.getFirstName());
+        assertEquals("Doe", user.getLastName());
+        assertEquals(LocalDate.of(1990, 5, 15), user.getDob());
+        assertEquals("1234567890", user.getPhoneNo());
+        assertEquals("john.doe@example.com", user.getEmailId());
+        assertEquals("123 Main St, City, Country", user.getAddress());
+        assertEquals("password", user.getPassword());
+        assertEquals("user", user.getRole());
+        assertNotNull(user.getCreatedAt());
+    }
+
+    @Test
+    public void testUserEntityValidation() {
+        User user = new User(); // User instance with no fields set
+
+        // Validation should fail because @NotNull constraint on 'password' field
+        assertThrows(ConstraintViolationException.class, () -> em.persist(user));
+    }
+
+    @Test
+    public void testUserEntityConstructor() {
+        LocalDate createdAt = LocalDate.now();
+        User user = new User(1L, "Jane", "Smith", LocalDate.of(1985, 10, 20), "9876543210",
+                "jane.smith@example.com", "456 Oak Ave, Town, Country", "password", "admin", createdAt);
+
+        assertEquals(1L, user.getUserId());
+        assertEquals("Jane", user.getFirstName());
+        assertEquals("Smith", user.getLastName());
+        assertEquals(LocalDate.of(1985, 10, 20), user.getDob());
+        assertEquals("9876543210", user.getPhoneNo());
+        assertEquals("jane.smith@example.com", user.getEmailId());
+        assertEquals("456 Oak Ave, Town, Country", user.getAddress());
+        assertEquals("password", user.getPassword());
+        assertEquals("admin", user.getRole());
+        assertEquals(createdAt, user.getCreatedAt());
+    }
+}
+

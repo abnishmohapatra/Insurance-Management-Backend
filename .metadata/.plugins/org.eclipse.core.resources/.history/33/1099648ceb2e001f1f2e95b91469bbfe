@@ -1,0 +1,119 @@
+package com.example.controller;
+
+import com.example.model.Tickets;
+import com.example.service.TicketsService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class TicketsControllerTest {
+
+    @Mock
+    private TicketsService ticketService;
+
+    @InjectMocks
+    private TicketsController ticketsController;
+
+    private Tickets ticket1;
+    private Tickets ticket2;
+
+    @BeforeEach
+    void setUp() {
+        ticket1 = new Tickets();
+        ticket1.setId(1L);
+        ticket1.setTitle("Ticket 1");
+
+        ticket2 = new Tickets();
+        ticket2.setId(2L);
+        ticket2.setTitle("Ticket 2");
+    }
+
+    @Test
+    void testGetAllTickets() {
+        when(ticketService.getAllTickets()).thenReturn(Arrays.asList(ticket1, ticket2));
+
+        List<Tickets> result = ticketsController.getAllTickets();
+
+        assertEquals(2, result.size());
+        assertEquals(ticket1, result.get(0));
+        assertEquals(ticket2, result.get(1));
+        verify(ticketService, times(1)).getAllTickets();
+    }
+
+    @Test
+    void testGetOpenTickets() {
+        when(ticketService.getOpenTickets()).thenReturn(Arrays.asList(ticket1));
+
+        List<Tickets> result = ticketsController.getOpenTickets();
+
+        assertEquals(1, result.size());
+        assertEquals(ticket1, result.get(0));
+        verify(ticketService, times(1)).getOpenTickets();
+    }
+
+    @Test
+    void testGetCloseTickets() {
+        when(ticketService.getCloseTickets()).thenReturn(Arrays.asList(ticket2));
+
+        List<Tickets> result = ticketsController.getCloseTickets();
+
+        assertEquals(1, result.size());
+        assertEquals(ticket2, result.get(0));
+        verify(ticketService, times(1)).getCloseTickets();
+    }
+
+    @Test
+    void testGetTicketById_Found() {
+        when(ticketService.getTicketById(anyLong())).thenReturn(Optional.of(ticket1));
+
+        ResponseEntity<Tickets> response = ticketsController.getTicketById(1L);
+
+        assertEquals(ResponseEntity.ok(ticket1), response);
+        verify(ticketService, times(1)).getTicketById(1L);
+    }
+
+    @Test
+    void testGetTicketById_NotFound() {
+        when(ticketService.getTicketById(anyLong())).thenReturn(Optional.empty());
+
+        ResponseEntity<Tickets> response = ticketsController.getTicketById(1L);
+
+        assertEquals(ResponseEntity.notFound().build(), response);
+        verify(ticketService, times(1)).getTicketById(1L);
+    }
+
+    @Test
+    void testAddTicket() {
+        doNothing().when(ticketService).add(any(Tickets.class));
+
+        ticketsController.add(ticket1);
+
+        verify(ticketService, times(1)).add(ticket1);
+    }
+
+    @Test
+    void testUpdateTicket() {
+        doNothing().when(ticketService).updateTicket(anyLong(), any(Tickets.class));
+
+        ticketsController.updateTicket(1L, ticket1);
+
+        verify(ticketService, times(1)).updateTicket(1L, ticket1);
+    }
+}
+

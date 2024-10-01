@@ -1,0 +1,134 @@
+package com.example.controller;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+
+import com.example.model.Tickets;
+import com.example.service.TicketsService;
+
+@ExtendWith(MockitoExtension.class)
+public class TicketsControllerTest {
+
+    @Mock
+    private TicketsService ticketsService;
+
+    @InjectMocks
+    private TicketsController ticketsController;
+
+    private Tickets ticket1;
+    private Tickets ticket2;
+
+    @BeforeEach
+    void setUp() {
+        ticket1 = new Tickets();
+        ticket1.setId(1L);
+        ticket1.setTitle("Title 1");
+        ticket1.setDescription("Description 1");
+
+        ticket2 = new Tickets();
+        ticket2.setId(2L);
+        ticket2.setTitle("Title 2");
+        ticket2.setDescription("Description 2");
+    }
+
+    @Test
+    void testGetAllTickets() {
+        List<Tickets> ticketsList = Arrays.asList(ticket1, ticket2);
+
+        when(ticketsService.getAllTickets()).thenReturn(ticketsList);
+
+        List<Tickets> result = ticketsController.getAllTickets();
+
+        verify(ticketsService, times(1)).getAllTickets();
+        assertEquals(ticketsList, result);
+    }
+
+    @Test
+    void testGetOpenTickets() {
+        List<Tickets> ticketsList = Arrays.asList(ticket1);
+
+        when(ticketsService.getOpenTickets()).thenReturn(ticketsList);
+
+        List<Tickets> result = ticketsController.getOpenTickets();
+
+        verify(ticketsService, times(1)).getOpenTickets();
+        assertEquals(ticketsList, result);
+    }
+
+    @Test
+    void testGetCloseTickets() {
+        List<Tickets> ticketsList = Arrays.asList(ticket2);
+
+        when(ticketsService.getCloseTickets()).thenReturn(ticketsList);
+
+        List<Tickets> result = ticketsController.getCloseTickets();
+
+        verify(ticketsService, times(1)).getCloseTickets();
+        assertEquals(ticketsList, result);
+    }
+
+    @Test
+    void testGetTicketById() {
+        when(ticketsService.getTicketById(1L)).thenReturn(Optional.of(ticket1));
+
+        ResponseEntity<Tickets> result = ticketsController.getTicketById(1L);
+
+        verify(ticketsService, times(1)).getTicketById(1L);
+        assertEquals(ResponseEntity.ok(ticket1), result);
+    }
+
+    @Test
+    void testAddTicket() {
+        ticketsController.add(ticket1);
+
+        verify(ticketsService, times(1)).add(ticket1);
+    }
+
+    @Test
+    void testUpdateTicket() {
+        when(ticketsService.getTicketById(1L)).thenReturn(Optional.of(ticket1));
+
+        Tickets updatedTicket = new Tickets();
+        updatedTicket.setResponseTxt("Updated Response");
+
+        ResponseEntity<Tickets> result = ticketsController.updateTicket(1L, updatedTicket);
+
+        verify(ticketsService, times(1)).getTicketById(1L);
+        verify(ticketsService, times(1)).updateTicket(1L, updatedTicket);
+        assertEquals("Updated Response", ticket1.getResponseTxt());
+        assertNotNull(ticket1.getResponseAt());
+        assertEquals(ResponseEntity.ok(ticket1), result);
+    }
+
+    @Test
+    void testUpdateTicketNotFound() {
+        when(ticketsService.getTicketById(1L)).thenReturn(Optional.empty());
+
+        Tickets updatedTicket = new Tickets();
+        updatedTicket.setResponseTxt("Updated Response");
+
+        ResponseEntity<Tickets> result = ticketsController.updateTicket(1L, updatedTicket);
+
+        verify(ticketsService, times(1)).getTicketById(1L);
+        verify(ticketsService, times(0)).updateTicket(1L, updatedTicket);
+        assertEquals(ResponseEntity.notFound().build(), result);
+    }
+}
+

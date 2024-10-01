@@ -1,0 +1,88 @@
+package com.example.controller;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.web.bind.annotation.*;
+
+import com.example.EmailRequest;
+import com.example.model.Tickets;
+import com.example.service.TicketsService;
+
+@RestController
+@RequestMapping("/api/tickets")
+@CrossOrigin(origins = "http://localhost:3000")
+public class TicketsController {
+
+    private final TicketsService ticketService;
+
+    public TicketsController(TicketsService ticketService) {
+        this.ticketService = ticketService;
+    }
+
+    @GetMapping("/get")
+    public List<Tickets> getAllTickets() {
+        return ticketService.getAllTickets();
+    }
+    
+    @GetMapping("/open")
+    public List<Tickets> getOpenTickets() {
+        return ticketService.getOpenTickets();
+    }
+    
+    @GetMapping("/closed")
+    public List<Tickets> getCloseTickets() {
+        return ticketService.getCloseTickets();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Tickets> getTicketById(@PathVariable Long id) {
+        Optional<Tickets> ticket = ticketService.getTicketById(id);
+        return ticket.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+    
+    @PostMapping("/create")
+    public void add(@RequestBody Tickets t) {
+        ticketService.add(t);
+    }
+    
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Tickets> updateTicket(@PathVariable Long id, @RequestBody Tickets ticketDetails) {
+        Optional<Tickets> ticketOptional = ticketService.getTicketById(id);
+
+        if (ticketOptional.isPresent()) {
+            Tickets ticket = ticketOptional.get();
+            ticket.setResponseTxt(ticketDetails.getResponseTxt());
+            ticket.setResponseAt(LocalDateTime.now());
+            ticketService.updateTicket(id, ticketDetails);
+            return ResponseEntity.ok(ticket);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/solved/{userId}")
+    public List<Tickets> getSolvedTicketsForUser(@PathVariable Long userId) {
+        return ticketService.getSolvedTicketsForUser(userId);
+    }
+    
+    
+    
+    @Autowired
+    private JavaMailSender javaMailSender;
+
+    @PostMapping("/send-email")
+    public String sendEmail(@RequestBody EmailRequest emailRequest) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(emailRequest.getTo());
+        message.setSubject(emailRequest.getSubject());
+        message.setText(emailRequest.getBody());
+        javaMailSender.send(message);
+        return "Email sent successfully";
+    }
+}
